@@ -3,13 +3,25 @@
 namespace App\DataFixtures;
 
 use App\Entity\Advice;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
 
 class AppFixtures extends Fixture
 {
+
+    private UserPasswordHasherInterface $passwordHasher;
+
+    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    {
+        $this->passwordHasher = $passwordHasher;
+    }
+
     public function load(ObjectManager $manager): void
     {
+
         $conseils = [
             1 => "Conseil de janvier : Préparez votre jardin pour l'hiver.",
             2 => "Conseil de février : Taillez les arbres et arbustes.",
@@ -31,6 +43,34 @@ class AppFixtures extends Fixture
             $advice->setMonth($mois);
             
             $manager->persist($advice);
+        }
+
+        $usersData = [
+            [
+                'email' => 'admin@admin.com',
+                'password' => 'admin123',
+                'roles' => ['ROLE_ADMIN'],
+                'postCode' => 71300
+            ],
+            [
+                'email' => 'user@user.com',
+                'password' => 'user123',
+                'roles' => ['ROLE_USER'],
+                'postCode' => 33000
+            ],
+        ];
+
+        foreach ($usersData as $userData) {
+            $user = new User();
+            $user->setEmail($userData['email']);
+            $user->setRoles($userData['roles']);
+            $user->setPostCode($userData['postCode']);
+
+            // Hachage du mot de passe
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $userData['password']);
+            $user->setPassword($hashedPassword);
+
+            $manager->persist($user);
         }
 
         $manager->flush();
