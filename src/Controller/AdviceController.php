@@ -25,7 +25,7 @@ class AdviceController extends AbstractController
      * 
      * /!\ /!\ /!\ Cette méthode n'est pas dans les spécifications techniques mais elle me sert de base /!\ /!\ /!\
      */
-    #[Route('/api/advices/all', name: 'app_advice', methods: ['GET'])]
+    #[Route('/api/advices/all', name: 'app_advice_all', methods: ['GET'])]
     public function getAllAdvices(): JsonResponse
     {
         $adviceList = $this->adviceRepository->findAll();
@@ -34,7 +34,19 @@ class AdviceController extends AbstractController
         return new JsonResponse($jsonAdviceList, Response::HTTP_OK, [], true);
     }
 
-
+    /**
+     * Récupérer tous les conseils pour le mois en cours
+     */
+    #[Route('/api/advices', name: 'app_advices_month', methods: ['GET'])]
+    public function getAdvicesForCurrentMonth(): JsonResponse
+    {
+        $currentMonth = (new \DateTime())->format('m');
+    
+        $adviceList = $this->adviceRepository->findByMonth($currentMonth);
+        $jsonAdviceList = $this->serializer->serialize($adviceList, 'json');
+    
+        return new JsonResponse($jsonAdviceList, Response::HTTP_OK, [], true);
+    }
 
     /**
      * Récupèrer tous les conseils d'un mois précis
