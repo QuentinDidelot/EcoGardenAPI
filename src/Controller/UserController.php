@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -72,6 +73,7 @@ class UserController extends AbstractController
      * Permet de modifier un profil utilisateur
      */
     #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un profil utilisateur')]
     public function updateUser(User $user, Request $request, int $id): JsonResponse {
 
         $user = $this->userRepository->find($id);
@@ -106,6 +108,7 @@ class UserController extends AbstractController
      * Permet de supprimer un utilisateur
      */
     #[Route('/api/user/{id}', name: 'app_user_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un utilisateur')]
     public function deleteUser(User $user, int $id): JsonResponse {
         $user = $this->userRepository->find($id);
 

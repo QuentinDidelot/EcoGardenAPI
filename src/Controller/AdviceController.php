@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -94,6 +95,7 @@ class AdviceController extends AbstractController
      * Permet de poster un conseil pour un mois donné
      */
     #[Route('/api/advices', name: 'app_advice_post', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un conseil')]
     public function postAdvice(Request $request): JsonResponse{
 
         $advice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json');
@@ -114,6 +116,7 @@ class AdviceController extends AbstractController
      * Permet de modifier un conseil avec son ID 
      */
     #[Route('/api/advices/{id}', name:"updateAdvice", methods:['PUT'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un conseil')]
     public function updateAdvice(Request $request, Advice $currentAdvice): JsonResponse {
 
         $updatedAdvice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $currentAdvice]);
@@ -145,6 +148,7 @@ class AdviceController extends AbstractController
      * Permet de supprimer un conseil avec son ID
      */
     #[Route('/api/advices/{id}', name: "deleteAdvice", methods:['DELETE'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un conseil')]
     public function deleteAdvice(int $id, AdviceRepository $adviceRepository, EntityManagerInterface $entityManager): JsonResponse {
 
         $advice = $adviceRepository->find($id);
