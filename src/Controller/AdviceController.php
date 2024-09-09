@@ -2,13 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\Advice;
 use App\Repository\AdviceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\MakerBundle\Validator;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AdviceController extends AbstractController
 {
@@ -16,7 +20,8 @@ class AdviceController extends AbstractController
     public function __construct(
         private AdviceRepository $adviceRepository,
         private EntityManagerInterface $entityManager,
-        private SerializerInterface $serializer)
+        private SerializerInterface $serializer,
+        private ValidatorInterface $validator)
     {
     }
 
@@ -53,7 +58,7 @@ class AdviceController extends AbstractController
      */
     #[Route('/api/advices/{month}', name: 'app_advice_by_month', methods: ['GET'])]
     public function getAdviceByMonth(int $month): JsonResponse {
-        $advice = $this->adviceRepository->findOneBy(['month' => $month]);
+        $advice = $this->adviceRepository->findBy(['month' => $month]);
 
         if (!$advice) {
             return new JsonResponse(['message' => 'Aucun conseil trouvé pour ce mois'], Response::HTTP_NOT_FOUND);
@@ -62,5 +67,24 @@ class AdviceController extends AbstractController
         $jsonAdvice = $this->serializer->serialize($advice, 'json');
 
         return new JsonResponse($jsonAdvice, Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * Permet de poster un conseil pour un mois donné
+     */
+    #[Route('/api/advices', name: 'app_advice_post', methods: ['POST'])]
+    public function postAdvice(Request $request): JsonResponse{
+        $advice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json');
+
+        $errors = $this->validator->validate($advice);
+        if ($errors->count() > 0) {
+            return new JsonResponse($this->serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
+        }
+
+        $this->entityManager->persist($advice);
+        $this->entityManager->flush();
+
+        return new JsonResponse($this->serializer->serialize(['message' => 'Conseil ajouté avec succès'], 'json'), Response::HTTP_CREATED, [], true);
+
     }
 }
