@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -40,6 +41,25 @@ class AdviceController extends AbstractController
     }
 
     /**
+     * Récupérer un conseil par son ID
+     * 
+     * /!\ /!\ /!\ Cette méthode n'est pas dans les spécifications techniques mais elle me sert de base /!\ /!\ /!\
+     */
+    #[Route('/api/advices/{id}', name: 'app_advice_by_id', methods: ['GET'])]
+    public function getAdviceById(int $id): JsonResponse
+    {
+        $advice = $this->adviceRepository->find($id);
+
+        if (!$advice) {
+            return new JsonResponse(['message' => 'Aucun conseil trouvé pour cet ID'], Response::HTTP_NOT_FOUND);
+        }
+        $jsonAdvice = $this->serializer->serialize($advice, 'json');
+
+        return new JsonResponse($jsonAdvice, Response::HTTP_OK, [], true);
+    }
+
+
+    /**
      * Récupérer tous les conseils pour le mois en cours
      */
     #[Route('/api/advices', name: 'app_advices_month', methods: ['GET'])]
@@ -56,8 +76,9 @@ class AdviceController extends AbstractController
     /**
      * Récupèrer tous les conseils d'un mois précis
      */
-    #[Route('/api/advices/{month}', name: 'app_advice_by_month', methods: ['GET'])]
+    #[Route('/api/advices/month/{month}', name: 'app_advice_by_month', methods: ['GET'])]
     public function getAdviceByMonth(int $month): JsonResponse {
+
         $advice = $this->adviceRepository->findBy(['month' => $month]);
 
         if (!$advice) {
@@ -74,6 +95,7 @@ class AdviceController extends AbstractController
      */
     #[Route('/api/advices', name: 'app_advice_post', methods: ['POST'])]
     public function postAdvice(Request $request): JsonResponse{
+
         $advice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json');
 
         $errors = $this->validator->validate($advice);
@@ -87,4 +109,55 @@ class AdviceController extends AbstractController
         return new JsonResponse($this->serializer->serialize(['message' => 'Conseil ajouté avec succès'], 'json'), Response::HTTP_CREATED, [], true);
 
     }
+
+    /**
+     * Permet de modifier un conseil avec son ID 
+     */
+    #[Route('/api/advices/{id}', name:"updateAdvice", methods:['PUT'])]
+    public function updateAdvice(Request $request, Advice $currentAdvice): JsonResponse {
+
+        $updatedAdvice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $currentAdvice]);
+
+        $content = $request->toArray();
+
+        // Mise à jour conditionnelle des champs en fonction de leur présence dans la requête
+        if (isset($content['adviceText'])) {
+            $updatedAdvice->setAdviceText($content['adviceText']);
+        }
+
+        if (isset($content['month'])) {
+            $updatedAdvice->setMonth($content['month']);
+        }
+
+        // Validation des erreurs de l'entité modifiée
+        $errors = $this->validator->validate($updatedAdvice);
+        if ($errors->count() > 0) {
+            return new JsonResponse($this->serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
+
+        $this->entityManager->persist($updatedAdvice);
+        $this->entityManager->flush();
+
+         return new JsonResponse($this->serializer->serialize(['message' => 'Conseil modifié avec succès'], 'json'), Response::HTTP_CREATED, [], true);
+    }
+
+    /**
+     * Permet de supprimer un conseil avec son ID
+     */
+    #[Route('/api/advices/{id}', name: "deleteAdvice", methods:['DELETE'])]
+    public function deleteAdvice(int $id, AdviceRepository $adviceRepository, EntityManagerInterface $entityManager): JsonResponse {
+
+        $advice = $adviceRepository->find($id);
+
+
+        if (!$advice) {
+            return new JsonResponse(['message' => 'Conseil introuvable'], Response::HTTP_NOT_FOUND);
+        }
+
+        $entityManager->remove($advice);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Conseil supprimé avec succès'], Response::HTTP_OK, [], true);
+    }
+
 }
