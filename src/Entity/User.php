@@ -7,6 +7,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -20,6 +22,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     #[Groups(["getUser"])]
+    #[Assert\NotBlank(message: 'Un email est obligatoire')]
     private ?string $email = null;
 
     /**
@@ -34,10 +37,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Groups(["getUser"])]
+    #[Assert\NotBlank(message: 'Un mot de passe est obligatoire')]
     private ?string $password = null;
 
     #[ORM\Column]
     #[Groups(["getUser"])]
+    #[Assert\NotBlank(message: 'Un code postal est obligatoire')]
     private ?int $postCode = null;
 
     public function getId(): ?int

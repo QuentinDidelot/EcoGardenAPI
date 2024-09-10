@@ -39,7 +39,7 @@ class AdviceController extends AbstractController
     public function getAllAdvices(): JsonResponse
     {
         $adviceList = $this->adviceRepository->findAll();
-        $jsonAdviceList = $this->serializer->serialize($adviceList, 'json');
+        $jsonAdviceList = $this->serializer->serialize($adviceList, 'json', ['groups' => 'getAdvice']);
 
         return new JsonResponse($jsonAdviceList, Response::HTTP_OK, [], true);
     }
@@ -62,7 +62,7 @@ class AdviceController extends AbstractController
         if (!$advice) {
             return new JsonResponse(['message' => 'No advice found for this ID'], Response::HTTP_NOT_FOUND);
         }
-        $jsonAdvice = $this->serializer->serialize($advice, 'json');
+        $jsonAdvice = $this->serializer->serialize($advice, 'json', ['groups' => 'getAdvice']);
 
         return new JsonResponse($jsonAdvice, Response::HTTP_OK, [], true);
     }
@@ -82,7 +82,7 @@ class AdviceController extends AbstractController
         $currentMonth = (new \DateTime())->format('m');
 
         $adviceList = $this->adviceRepository->findByMonth($currentMonth);
-        $jsonAdviceList = $this->serializer->serialize($adviceList, 'json');
+        $jsonAdviceList = $this->serializer->serialize($adviceList, 'json', ['groups' => 'getAdvice']);
 
         return new JsonResponse($jsonAdviceList, Response::HTTP_OK, [], true);
     }
@@ -105,7 +105,7 @@ class AdviceController extends AbstractController
             return new JsonResponse(['message' => 'Aucun conseil trouvé pour ce mois'], Response::HTTP_NOT_FOUND);
         }
 
-        $jsonAdvice = $this->serializer->serialize($advice, 'json');
+        $jsonAdvice = $this->serializer->serialize($advice, 'json', ['groups' => 'getAdvice']);
 
         return new JsonResponse($jsonAdvice, Response::HTTP_OK, [], true);
     }
@@ -120,22 +120,26 @@ class AdviceController extends AbstractController
      * @return JsonResponse La réponse HTTP contenant un message de succès ou d'erreur.
      */
     #[Route('/api/advices', name: 'app_advice_post', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un conseil')]
     public function postAdvice(Request $request): JsonResponse{
-
+    
+        // Vérifier si l'utilisateur a le rôle ADMIN
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['message' => 'Vous n\'avez pas les droits suffisants pour créer un conseil'], Response::HTTP_FORBIDDEN);
+        }
+    
         $advice = $this->serializer->deserialize($request->getContent(), Advice::class, 'json');
-
+    
         $errors = $this->validator->validate($advice);
         if ($errors->count() > 0) {
             return new JsonResponse($this->serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
         }
-
+    
         $this->entityManager->persist($advice);
         $this->entityManager->flush();
-
-        return new JsonResponse($this->serializer->serialize(['message' => 'Conseil ajouté avec succès'], 'json'), Response::HTTP_CREATED, [], true);
-
+    
+        return new JsonResponse(['message' => 'Conseil ajouté avec succès'], Response::HTTP_CREATED);
     }
+    
 
     /**
      * Met à jour un conseil existant avec son ID.
