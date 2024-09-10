@@ -35,42 +35,56 @@ class UserController extends AbstractController
 
     /**
      * Permet de créer un nouveal utilisateur
+     *
+     * @Route("/api/user", name="app_user_create", methods={"POST"})
+     *
+     * @param Request $request The request object containing the user data.
+     *
+     * @return JsonResponse The response containing the created user data or an error message.
      */
     #[Route('/api/user', name: 'app_user_create', methods: ['POST'])]
     public function createUser(Request $request): JsonResponse {
 
         $user = $this->serializer->deserialize($request->getContent(), User::class, 'json');
-    
+
 
         $errors = $this->validator->validate($user);
         if ($errors->count() > 0) {
             return new JsonResponse($this->serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
-    
-        // Vérifie si le code postal est bien présent et valide
+
+        // Vérifie si le code postal est présent et s'il est valide
         if (!preg_match('/^\d{5}$/', $user->getPostCode())) {
             return new JsonResponse(['message' => 'Le code postal est invalide, il doit être sous le format : 10000'], Response::HTTP_BAD_REQUEST);
         }
-    
+
         $hashedPassword = $this->passwordHasher->hashPassword($user, $user->getPassword());
         $user->setPassword($hashedPassword);
 
         $user->setRoles(['ROLE_USER']);
-    
-        // Sauvegarder l'utilisateur
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
-    
+
         $this->cache->invalidateTags(["usersCache"]);
-    
-        // Sérialiser l'utilisateur créé
+
         $jsonUser = $this->serializer->serialize($user, 'json', ['groups' => 'getUser']);
-    
+
         return new JsonResponse($jsonUser, Response::HTTP_CREATED, [], true);
     }
 
+
     /**
      * Permet de modifier un profil utilisateur
+     *
+     * @Route("/api/user/{id}", name="app_user_update", methods={"PUT"})
+     * @IsGranted("ROLE_ADMIN", message="Vous n'avez pas les droits suffisants pour modifier un profil utilisateur")
+     *
+     * @param User $user The user entity to update.
+     * @param Request $request The request object containing the updated user data.
+     * @param int $id The unique identifier of the user to update.
+     *
+     * @return JsonResponse The response containing the updated user data or an error message.
      */
     #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un profil utilisateur')]
@@ -89,7 +103,7 @@ class UserController extends AbstractController
             return new JsonResponse($this->serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
 
-        // Vérifier si le code postal est bien présent et valide
+        // Vérifie si le code postal est bien présent et valide
         if (!preg_match('/^\d{5}$/', $user->getPostCode())) {
             return new JsonResponse(['message' => 'Le code postal est invalide, il doit être sous le format : 10000'], Response::HTTP_BAD_REQUEST);
         }
@@ -106,6 +120,14 @@ class UserController extends AbstractController
 
     /**
      * Permet de supprimer un utilisateur
+     *
+     * @Route("/api/user/{id}", name="app_user_delete", methods={"DELETE"})
+     * @IsGranted("ROLE_ADMIN", message="Vous n'avez pas les droits suffisants pour supprimer un utilisateur")
+     *
+     * @param User $user The user entity to delete.
+     * @param int $id The unique identifier of the user to delete.
+     *
+     * @return JsonResponse The response containing a success message or an error message if the user is not found.
      */
     #[Route('/api/user/{id}', name: 'app_user_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un utilisateur')]
