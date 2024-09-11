@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Controller;
 
 use App\Entity\User;
@@ -18,6 +19,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use OpenApi\Attributes as OA;
 
 class UserController extends AbstractController
 {
@@ -36,13 +38,28 @@ class UserController extends AbstractController
     /**
      * Permet de créer un nouveal utilisateur
      *
-     * @Route("/api/user", name="app_user_create", methods={"POST"})
-     *
      * @param Request $request The request object containing the user data.
      *
      * @return JsonResponse The response containing the created user data or an error message.
      */
+    #[OA\Tag(name: 'Users')]
+    #[OA\RequestBody(
+        description: 'Permets de créer un nouvel utilisateur', 
+        required: true, 
+        content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'email', description: 'Adresse email', type: 'string'),
+            new OA\Property(property: 'password', description: 'Mot de passe', type: 'string'),
+            new OA\Property(property: 'postcode', description: 'Code postal', type: 'integer'),
+        ], type: 'object'
+    )
+    )]
+    #[OA\Response(
+        response: 204,
+        description: 'No Content'
+    )]
     #[Route('/api/user', name: 'app_user_create', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un profil utilisateur')]
     public function createUser(Request $request): JsonResponse {
 
         $user = $this->serializer->deserialize($request->getContent(), User::class, 'json');
@@ -77,15 +94,29 @@ class UserController extends AbstractController
     /**
      * Permet de modifier un profil utilisateur
      *
-     * @Route("/api/user/{id}", name="app_user_update", methods={"PUT"})
-     * @IsGranted("ROLE_ADMIN", message="Vous n'avez pas les droits suffisants pour modifier un profil utilisateur")
-     *
      * @param User $user The user entity to update.
      * @param Request $request The request object containing the updated user data.
      * @param int $id The unique identifier of the user to update.
      *
      * @return JsonResponse The response containing the updated user data or an error message.
      */
+    #[OA\Tag(name: 'Users')]
+    #[OA\RequestBody(
+        description: 'Modifier un profil utilisateur', 
+        required: false, 
+        content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'email', description: 'Adresse email', type: 'string'),
+            new OA\Property(property: 'roles', description: 'Role ["ROLE_USER"] ou ["ROLE_ADMIN"]', type: 'array', items: new OA\Items(type: 'string')),
+            new OA\Property(property: 'password', description: 'Mot de passe', type: 'string'),
+            new OA\Property(property: 'postcode', description: 'Code Postal', type: 'integer'),
+        ], type: 'object'
+    )
+    )]
+    #[OA\Response(
+        response: 204,
+        description: 'No Content'
+    )]
     #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un profil utilisateur')]
     public function updateUser(User $user, Request $request, int $id): JsonResponse {
@@ -105,7 +136,7 @@ class UserController extends AbstractController
 
         // Vérifie si le code postal est bien présent et valide
         if (!preg_match('/^\d{5}$/', $user->getPostCode())) {
-            return new JsonResponse(['message' => 'Le code postal est invalide, il doit être sous le format : 10000'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['message' => 'Le code postal est invalide, il doit être sous le format : XXXXX'], Response::HTTP_BAD_REQUEST);
         }
 
         $this->entityManager->flush();
@@ -129,6 +160,11 @@ class UserController extends AbstractController
      *
      * @return JsonResponse The response containing a success message or an error message if the user is not found.
      */
+    #[OA\Tag(name: 'Users')]
+    #[OA\Response(
+        response: 204,
+        description: 'Utilisateur supprimé'
+    )]
     #[Route('/api/user/{id}', name: 'app_user_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un utilisateur')]
     public function deleteUser(User $user, int $id): JsonResponse {

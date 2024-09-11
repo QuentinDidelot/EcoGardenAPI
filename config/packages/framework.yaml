@@ -1,7 +1,8 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
-    annotations: false
+    annotations:
+        enabled: false  # Désactive les annotations
     http_method_override: false
     handle_all_throwables: true
 
