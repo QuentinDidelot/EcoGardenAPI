@@ -14,3 +14,12 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Controller\ExternalWeatherApiController:
+        arguments:
+            $cache: '@cache.app'
+            $httpClient: '@http_client'
+            $serializer: '@serializer'
+            
+parameters:
+    openweathermap_api_key: '%env(OPENWEATHER_API_KEY)%'

@@ -123,6 +123,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPostCode(): ?int
     {
         return $this->postCode;
+
     }
 
     public function setPostCode(int $postCode): static
