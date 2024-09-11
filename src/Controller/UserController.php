@@ -117,6 +117,14 @@ class UserController extends AbstractController
         response: 204,
         description: 'No Content'
     )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
+    )]
     #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un profil utilisateur')]
     public function updateUser(User $user, Request $request, int $id): JsonResponse {
@@ -164,6 +172,14 @@ class UserController extends AbstractController
     #[OA\Response(
         response: 204,
         description: 'Utilisateur supprimé'
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
     )]
     #[Route('/api/user/{id}', name: 'app_user_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un utilisateur')]

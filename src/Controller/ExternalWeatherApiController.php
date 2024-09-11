@@ -113,13 +113,14 @@ class ExternalWeatherApiController extends AbstractController
 
             $response = $this->httpClient->request('GET', 'http://api.openweathermap.org/data/2.5/weather', [
                 'query' => [
-                    'q' => $city,
+                    'q' => $city.", FR",
                     'appid' => $apiKey,
                     'units' => 'metric',
                 ],
             ]);
 
             if ($response->getStatusCode() === 200) {
+
                 return $response->getContent();
             }
 

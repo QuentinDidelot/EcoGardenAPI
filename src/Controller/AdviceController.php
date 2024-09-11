@@ -31,6 +31,8 @@ class AdviceController extends AbstractController
 
     /**
      * Cette méthode permet de récupérer l'ensemble des conseils
+     * 
+     * /!\ /!\ /!\ Cette méthode n'est pas dans les spécifications techniques mais elle me sert de base /!\ /!\ /!\
      *
      * @return JsonResponse
      */
@@ -42,6 +44,14 @@ class AdviceController extends AbstractController
             type: 'array',
             items: new OA\Items(ref: new Model(type: Advice::class))
         )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
     )]
     #[Route('/api/advices/all', name: 'app_advice_all', methods: ['GET'])]
     public function getAllAdvices(): JsonResponse
@@ -73,6 +83,14 @@ class AdviceController extends AbstractController
             items: new OA\Items(ref: new Model(type: Advice::class))
         )
     )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
+    )]
     #[Route('/api/advices/{id}', name: 'app_advice_by_id', methods: ['GET'])]
     public function getAdviceById(int $id): JsonResponse
     {
@@ -102,6 +120,14 @@ class AdviceController extends AbstractController
             items: new OA\Items(ref: new Model(type: Advice::class))
         )
     )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
+    )]
     #[Route('/api/advices', name: 'app_advices_month', methods: ['GET'])]
     public function getAdvicesForCurrentMonth(): JsonResponse
     {
@@ -129,6 +155,14 @@ class AdviceController extends AbstractController
             type: 'array',
             items: new OA\Items(ref: new Model(type: Advice::class))
         )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
     )]
     #[Route('/api/advices/month/{month}', name: 'app_advice_by_month', methods: ['GET'])]
     public function getAdviceByMonth(int $month): JsonResponse {
@@ -170,6 +204,14 @@ class AdviceController extends AbstractController
             items: new OA\Items(ref: new Model(type: Advice::class))
         )
     )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
+    )]
     #[Route('/api/advices', name: 'app_advice_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour ajouter un conseil')]
     public function postAdvice(Request $request): JsonResponse{
@@ -208,8 +250,16 @@ class AdviceController extends AbstractController
         )
     )]
     #[OA\Response(
-        response: 204,
-        description: 'No Content'
+        response: 201,
+        description: 'Created Successfully'
+    )]
+    #[OA\Response(
+        response: 400,
+        description: 'Requête invalide'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
     )]
     #[Route('/api/advices/{id}', name:"updateAdvice", methods:['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un conseil')]
@@ -219,7 +269,6 @@ class AdviceController extends AbstractController
 
         $content = $request->toArray();
 
-        // Mise à jour conditionnelle des champs en fonction de leur présence dans la requête
         if (isset($content['adviceText'])) {
             $updatedAdvice->setAdviceText($content['adviceText']);
         }
