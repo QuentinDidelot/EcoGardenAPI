@@ -55,8 +55,20 @@ class UserController extends AbstractController
     )
     )]
     #[OA\Response(
+        response: 201,
+        description: 'Created Successfully'
+    )]
+    #[OA\Response(
         response: 204,
         description: 'No Content'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Utilisateur non authentifié'
+    )]
+    #[OA\Response(
+        response: 403,
+        description: "Accès refusé : vous n'avez pas les droits nécessaires pour effectuer cette action"
     )]
     #[Route('/api/user', name: 'app_user_create', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour créer un profil utilisateur')]
@@ -125,6 +137,10 @@ class UserController extends AbstractController
         response: 401,
         description: 'Utilisateur non authentifié'
     )]
+    #[OA\Response(
+        response: 403,
+        description: "Accès refusé : vous n'avez pas les droits nécessaires pour effectuer cette action"
+    )]
     #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour modifier un profil utilisateur')]
     public function updateUser(User $user, Request $request, int $id): JsonResponse {
@@ -180,6 +196,10 @@ class UserController extends AbstractController
     #[OA\Response(
         response: 401,
         description: 'Utilisateur non authentifié'
+    )]
+    #[OA\Response(
+        response: 403,
+        description: "Accès refusé : vous n'avez pas les droits nécessaires pour effectuer cette action"
     )]
     #[Route('/api/user/{id}', name: 'app_user_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits suffisants pour supprimer un utilisateur')]
